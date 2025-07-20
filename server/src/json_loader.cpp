@@ -11,6 +11,7 @@ void json_loader::load(const std::string &path) {
 
     try {
         udp_ip = config.at("udp_ip").get<std::string>();
+        buffer_size= config.at("buffer_size").get<int>();
         udp_port = config.at("udp_port").get<int>();
         session_timeout_sec = config.at("session_timeout_sec").get<int>();
         cdr_file = config.at("cdr_file").get<std::string>();
@@ -21,6 +22,5 @@ void json_loader::load(const std::string &path) {
         blacklist = config.at("blacklist").get<std::vector<std::string>>();
     } catch (const std::exception& e) {
         std::cerr << "Error parsing config: " << e.what() << "\n";
-
     }
 }

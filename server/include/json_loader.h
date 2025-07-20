@@ -7,6 +7,7 @@ class json_loader {
 public:
     std::string udp_ip;
     int udp_port;
+    int buffer_size;
     int session_timeout_sec;
     std::string cdr_file;
     int http_port;
