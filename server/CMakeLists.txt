@@ -4,10 +4,22 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(server server_main.cpp
         include/json_loader.h
-        src/json_loader.cpp)
-
+        src/json_loader.cpp
+        include/logger.h
+        src/logger.cpp)
 
 include(FetchContent)
+
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.15.3
+)
+
+FetchContent_MakeAvailable(spdlog)
+
+target_link_libraries(server PRIVATE spdlog::spdlog)
+
 
 FetchContent_Declare(
         json
