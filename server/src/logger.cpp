@@ -1,6 +1,6 @@
 #include "logger.h"
 
-// Статическая переменная для логгераl
+// Статическая переменная для логгера
 std::shared_ptr<spdlog::logger> Logger::logger = nullptr;
 
 void Logger::init(const std::string& filename, const std::string& level_str) {
@@ -23,11 +23,15 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
         logger->set_level(level);
         logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");
 
-        std::cout << "Введён уровень: " << level_str << std::endl;
         auto level_sv = spdlog::level::to_string_view(level);
         std::string level_sv_str(level_sv.data(), level_sv.size());
-        std::cout << "Установлен уровень логгирования: " << level_sv_str << std::endl;
+#ifdef NDEBUG
 
+#else
+        std::cout << "Введён уровень: " << level_str << std::endl;
+        std::cout << "Установлен уровень логгирования: " << level_sv_str << std::endl;
+#endif
+        logger->info("Logger initialised. Level: {}", level_sv_str);
     } catch (const spdlog::spdlog_ex& ex) {
         std::cerr << "Log init failed: " << ex.what() << std::endl;
     }
@@ -35,7 +39,8 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
 
 std::shared_ptr<spdlog::logger> Logger::get() {
     if (!logger) {
-        std::cout << "Logger not initialized, using default parameters." << std::endl;
+        std::cerr << "Logger not initialized, using default parameters." << std::endl;
+        logger->warn("Logger not initialized. Using default parameters.");
         init("pgw.log", "info");
     }
     return logger;
@@ -60,10 +65,11 @@ spdlog::level::level_enum Logger::parse_level(const std::string& level_str) {
     }
 
     std::cerr << "Неверный уровень логгирования: \"" << input << "\". Поддерживаются только уровни: ";
+
     for (const auto& pair : level_map) {
         std::cerr << pair.first << " ";
     }
     std::cerr << std::endl;
-
+    logger->error("Неверный уровень логгирования: {}.", input);
     return spdlog::level::info;  // По умолчанию
 }
