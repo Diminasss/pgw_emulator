@@ -1,6 +1,6 @@
 #include "logger.h"
 
-// Статическая переменная для логгера
+// Статическая переменная для логгераl
 std::shared_ptr<spdlog::logger> Logger::logger = nullptr;
 
 void Logger::init(const std::string& filename, const std::string& level_str) {
