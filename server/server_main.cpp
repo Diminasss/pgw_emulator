@@ -1,9 +1,13 @@
-//
-// Created by diminas on 20.07.2025.
-//
+#include "include/json_loader.h"
 #include <iostream>
 
+using std::cout;
+using std::endl;
+
+
 int main() {
-    std::cout << "asasass";
+    json_loader jsonLoader;
+    jsonLoader.load("config/server_config.json");
+    cout << jsonLoader.http_port;
     return 0;
 }
