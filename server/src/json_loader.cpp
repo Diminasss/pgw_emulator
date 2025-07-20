@@ -21,6 +21,6 @@ void json_loader::load(const std::string &path) {
         blacklist = config.at("blacklist").get<std::vector<std::string>>();
     } catch (const std::exception& e) {
         std::cerr << "Error parsing config: " << e.what() << "\n";
-        throw;  // дальше кидаем исключение наружу
+
     }
 }

@@ -40,7 +40,7 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
 std::shared_ptr<spdlog::logger> Logger::get() {
     if (!logger) {
         std::cerr << "Logger not initialized, using default parameters." << std::endl;
-        logger->warn("Logger not initialized. Using default parameters.");
+        logger->warn("Logger not initialized. Using default parameters. (pgw.log + info)");
         init("pgw.log", "info");
     }
     return logger;
@@ -69,7 +69,7 @@ spdlog::level::level_enum Logger::parse_level(const std::string& level_str) {
     for (const auto& pair : level_map) {
         std::cerr << pair.first << " ";
     }
-    std::cerr << std::endl;
+    std::cerr << std::endl << std::endl;
     logger->error("Неверный уровень логгирования: {}.", input);
-    return spdlog::level::info;  // По умолчанию
+    throw std::runtime_error("Invalid argument");
 }
