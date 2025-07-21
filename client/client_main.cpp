@@ -6,30 +6,22 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include "ascii2bcd.h"
+#include "logger.h"
 
-// Функция для конвертации ASCII IMSI в BCD
-std::vector<uint8_t> ascii_to_bcd(const std::string& imsi) {
-    std::vector<uint8_t> bcd;
-    std::string padded_imsi = imsi;
 
-    // Добавляем 0 в начало, если длина нечетная
-    if (padded_imsi.length() % 2 != 0) {
-        padded_imsi = "0" + padded_imsi;
-    }
-
-    for (size_t i = 0; i < padded_imsi.length(); i += 2) {
-        uint8_t high = padded_imsi[i] - '0';
-        uint8_t low = padded_imsi[i + 1] - '0';
-        bcd.push_back((high << 4) | low);
-    }
-
-    return bcd;
-}
 
 int main(int argc, char* argv[]) {
+#ifdef NDEBUG
+    Logger::init(jsonLoader.log_file, jsonLoader.log_level);
+    Logger::get()->info("Server prepared to start in RELEASE mode");
+#else
+    Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/pgw.logs", "info");
+    Logger::get()->info("Server prepared to start in DEBUG mode");
+#endif
     std::string server_ip = "127.0.0.1";
-    int server_port = 8080;
-    std::string imsi = "250456789012345"; // IMSI по умолчанию
+    int server_port = 9000;
+    std::string imsi = "250123456"; // IMSI по умолчанию
 
     // Простой парсинг аргументов
     if (argc >= 2) {
@@ -64,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Конвертация IMSI в BCD
-    std::vector<uint8_t> bcd_data = ascii_to_bcd(imsi);
+    std::vector<uint8_t> bcd_data = ascii2bcd(imsi);
 
     std::cout << "BCD данные: ";
     for (uint8_t byte : bcd_data) {

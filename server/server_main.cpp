@@ -6,39 +6,56 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <bitset>
 
 
 using std::cout;
 using std::endl;
 
-// Простой парсер BCD → ASCII IMSI
-std::string bcd_to_ascii(const uint8_t* bcd, size_t len) {
+// Функция для конвертации BCD в ASCII для IMSI
+std::string bcd2ascii(const std::vector<uint8_t>& bcd) {
     std::string result;
+    size_t len = bcd.size();
+
     for (size_t i = 0; i < len; ++i) {
         uint8_t byte = bcd[i];
-        uint8_t low = byte & 0x0F;
+
+        // Сначала старший ниббл
         uint8_t high = (byte & 0xF0) >> 4;
+        uint8_t low  = byte & 0x0F;
 
-        if (low <= 9)
-            result += ('0' + low);
-        else
-            break;
+        // Обработка старшего ниббла
+        if (high <= 9) {
+            result += static_cast<char>('0' + high);
+        } else if (high == 0xF) {
+            break; // padding — конец строки
+        } else {
+            break; // недопустимый BCD
+        }
 
-        if (high <= 9)
-            result += ('0' + high);
-        else
-            break;
+        // Обработка младшего ниббла
+        if (low <= 9) {
+            result += static_cast<char>('0' + low);
+        } else if (low == 0xF) {
+            break; // padding — конец строки
+        } else {
+            break; // недопустимый BCD
+        }
     }
+
     return result;
 }
+
+
 bool handle_imsi(const std::string& imsi_ascii) {
     // Заглушка: одобряем IMSI, если оно начинается с "250"
     return imsi_ascii.starts_with("250");
 }
+
 
 int main() {
     // Загрузка JSON конфигурации
@@ -50,9 +67,20 @@ int main() {
     Logger::init(jsonLoader.log_file, jsonLoader.log_level);
     Logger::get()->info("Server prepared to start in RELEASE mode");
 #else
-    Logger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/pgw.log", "info");
+    Logger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/pgw.logs", "info");
     Logger::get()->info("Server prepared to start in DEBUG mode");
 #endif
+
+//    uint8_t test_bcd[] = {0x52, 0x09, 0x91, 0x32, 0x54, 0x76, 0x98, 0x0F};
+//    std::string result = bcd_to_ascii(test_bcd, 8);
+//    std::cout << "Результат: " << result << std::endl; // Должно быть: 250991234567890
+//    cout << "Должно быть 250991234567890" << endl;
+//    if (result == "250991234567890"){
+//        cout << "Верно!" << endl;
+//    }
+//    else{
+//        cout << "НЕ верно!" << endl;
+//    }
 
     const int SERVER_PORT = jsonLoader.udp_port;
     const int BUFFER_SIZE = jsonLoader.buffer_size;
@@ -111,68 +139,80 @@ int main() {
     epoll_event events[MAX_EVENTS];
 
     while (true) {
-        // Ожидание событий
+        // Блокируем на epoll, ждём любого события на наших фд
         int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-
         if (nfds < 0) {
-            if (errno == EINTR) continue; // Прерывание сигналом
+            if (errno == EINTR)
+                continue;     // если прервано сигналом, просто пересадить
             perror("epoll_wait");
             break;
         }
 
-        // Обработка событий
         for (int i = 0; i < nfds; ++i) {
-            if (events[i].data.fd == sockfd) {
-                // Обработка входящих UDP пакетов
+            // Проверяем, что это событие на нашем UDP‑сокете
+            if ((events[i].events & EPOLLIN) && events[i].data.fd == sockfd) {
+                // Edge‑triggered: читаем до EAGAIN/EWOULDBLOCK
                 while (true) {
                     uint8_t buffer[BUFFER_SIZE];
                     sockaddr_in client_addr{};
                     socklen_t client_len = sizeof(client_addr);
 
-                    ssize_t received = recvfrom(sockfd, buffer, sizeof(buffer), 0,
-                                                (sockaddr*)&client_addr, &client_len);
+                    ssize_t received = recvfrom(
+                            sockfd,
+                            buffer, sizeof(buffer),
+                            0,
+                            (sockaddr*)&client_addr, &client_len
+                    );
 
                     if (received < 0) {
                         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                            // Нет больше данных в edge-triggered режиме
+                            // больше данных нет — выходим из inner‑loop
                             break;
                         } else {
                             perror("recvfrom");
                             break;
                         }
                     }
-
                     if (received == 0) {
+                        // UDP‑сокет никогда не даст 0‑байтов, но на всякий случай
                         break;
                     }
 
-                    // Обработка полученных данных
-                    std::string imsi = bcd_to_ascii(buffer, received);
+                    // Преобразуем raw‑буфер в вектор
+                    std::vector<uint8_t> bcd_data(buffer, buffer + received);
+                    // Конвертируем BCD → ASCII IMSI
+                    std::string imsi = bcd2ascii(bcd_data);
+
+                    char client_ip[INET_ADDRSTRLEN];
+                    inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+
                     std::cout << "Получен IMSI: " << imsi
-                              << " от " << inet_ntoa(client_addr.sin_addr)
-                              << ":" << ntohs(client_addr.sin_port) << std::endl;
+                              << " от " << client_ip
+                              << ":" << ntohs(client_addr.sin_port) << "\n";
+                    Logger::get()->info("Received IMSI {} from {}", imsi, client_ip);
 
-                    Logger::get()->info("Received IMSI: " + imsi + " from " +
-                                        inet_ntoa(client_addr.sin_addr));
+                    // Решаем, что отвечать
+                    std::string response = handle_imsi(imsi)
+                                           ? "created"
+                                           : "rejected";
 
-                    // Определение ответа
-                    std::string response = handle_imsi(imsi) ? "created" : "rejected";
-
-                    // Отправка ответа
-                    ssize_t sent = sendto(sockfd, response.c_str(), response.size(), 0,
-                                          (sockaddr*)&client_addr, client_len);
-
+                    // Отправляем ответ
+                    ssize_t sent = sendto(
+                            sockfd,
+                            response.c_str(), response.size(),
+                            0,
+                            (sockaddr*)&client_addr, client_len
+                    );
                     if (sent < 0) {
                         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                            // Буфер отправки заполнен, можно добавить в очередь
-                            std::cout << "Буфер отправки заполнен для " << imsi << std::endl;
+                            std::cout << "Send buffer full for " << imsi << "\n";
                         } else {
                             perror("sendto");
                         }
                     } else {
                         std::cout << "Ответ отправлен: " << response
-                                  << " для IMSI: " << imsi << std::endl;
-                        Logger::get()->info("Response sent: " + response + " for IMSI: " + imsi);
+                                  << " для IMSI: " << imsi << "\n";
+                        Logger::get()->info("Response sent: {} for IMSI {}", response, imsi);
                     }
                 }
             }
