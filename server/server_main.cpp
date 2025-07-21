@@ -1,5 +1,7 @@
-#include "include/json_loader.h"
+#include "json_loader.h"
+#include "bcd2ascii.h"
 #include "logger.h"
+
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
@@ -7,48 +9,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cerrno>
-#include <cstring>
 #include <iostream>
 #include <string>
-#include <bitset>
+
 
 
 using std::cout;
 using std::endl;
 
-// Функция для конвертации BCD в ASCII для IMSI
-std::string bcd2ascii(const std::vector<uint8_t>& bcd) {
-    std::string result;
-    size_t len = bcd.size();
 
-    for (size_t i = 0; i < len; ++i) {
-        uint8_t byte = bcd[i];
-
-        // Сначала старший ниббл
-        uint8_t high = (byte & 0xF0) >> 4;
-        uint8_t low  = byte & 0x0F;
-
-        // Обработка старшего ниббла
-        if (high <= 9) {
-            result += static_cast<char>('0' + high);
-        } else if (high == 0xF) {
-            break; // padding — конец строки
-        } else {
-            break; // недопустимый BCD
-        }
-
-        // Обработка младшего ниббла
-        if (low <= 9) {
-            result += static_cast<char>('0' + low);
-        } else if (low == 0xF) {
-            break; // padding — конец строки
-        } else {
-            break; // недопустимый BCD
-        }
-    }
-
-    return result;
-}
 
 
 bool handle_imsi(const std::string& imsi_ascii) {
@@ -70,17 +39,6 @@ int main() {
     Logger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/pgw.logs", "info");
     Logger::get()->info("Server prepared to start in DEBUG mode");
 #endif
-
-//    uint8_t test_bcd[] = {0x52, 0x09, 0x91, 0x32, 0x54, 0x76, 0x98, 0x0F};
-//    std::string result = bcd_to_ascii(test_bcd, 8);
-//    std::cout << "Результат: " << result << std::endl; // Должно быть: 250991234567890
-//    cout << "Должно быть 250991234567890" << endl;
-//    if (result == "250991234567890"){
-//        cout << "Верно!" << endl;
-//    }
-//    else{
-//        cout << "НЕ верно!" << endl;
-//    }
 
     const int SERVER_PORT = jsonLoader.udp_port;
     const int BUFFER_SIZE = jsonLoader.buffer_size;
