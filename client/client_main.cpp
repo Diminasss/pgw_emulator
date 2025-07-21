@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     Logger::init(jsonLoader.log_file, jsonLoader.log_level);
     Logger::get()->info("Server prepared to start in RELEASE mode");
 #else
-    Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/pgw.logs", "info");
+    Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/client.log", "info");
     Logger::get()->info("Server prepared to start in DEBUG mode");
 #endif
     std::string server_ip = "127.0.0.1";

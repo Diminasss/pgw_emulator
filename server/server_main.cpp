@@ -11,6 +11,7 @@
 #include <cerrno>
 #include <iostream>
 #include <string>
+#include <unordered_set>// Для chek_msi
 
 
 
@@ -20,8 +21,11 @@ using std::endl;
 
 
 
-bool handle_imsi(const std::string& imsi_ascii) {
-    // Заглушка: одобряем IMSI, если оно начинается с "250"
+bool check_imsi(const std::string& imsi_ascii, std::unordered_set<std::string>& black_list) {
+
+    if (black_list.contains(imsi_ascii)){
+        return false;
+    }
     return imsi_ascii.starts_with("250");
 }
 
@@ -42,7 +46,7 @@ int main() {
 
     const int SERVER_PORT = jsonLoader.udp_port;
     const int BUFFER_SIZE = jsonLoader.buffer_size;
-    const int MAX_EVENTS = 10;
+    const int MAX_EVENTS = jsonLoader.max_events;
 
     // Создание UDP сокета
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -138,7 +142,7 @@ int main() {
 
                     // Преобразуем raw‑буфер в вектор
                     std::vector<uint8_t> bcd_data(buffer, buffer + received);
-                    // Конвертируем BCD → ASCII IMSI
+                    // Конвертируем BCD -> ASCII IMSI
                     std::string imsi = bcd2ascii(bcd_data);
 
                     char client_ip[INET_ADDRSTRLEN];
@@ -150,7 +154,7 @@ int main() {
                     Logger::get()->info("Received IMSI {} from {}", imsi, client_ip);
 
                     // Решаем, что отвечать
-                    std::string response = handle_imsi(imsi)
+                    std::string response = check_imsi(imsi, jsonLoader.blacklist)
                                            ? "created"
                                            : "rejected";
 

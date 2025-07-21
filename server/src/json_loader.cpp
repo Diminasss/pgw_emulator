@@ -19,7 +19,8 @@ void json_loader::load(const std::string &path) {
         graceful_shutdown_rate = config.at("graceful_shutdown_rate").get<int>();
         log_file = config.at("log_file").get<std::string>();
         log_level = config.at("log_level").get<std::string>();
-        blacklist = config.at("blacklist").get<std::vector<std::string>>();
+        blacklist = config.at("blacklist").get<std::unordered_set<std::string>>();
+        max_events = config.at("max_events").get<int>();
     } catch (const std::exception& e) {
         std::cerr << "Error parsing config: " << e.what() << "\n";
     }

@@ -1,4 +1,7 @@
 cmake-build-debug/
 cmake-build-release/
 .idea/
+server/logs
+client/logs
 server/logs/pgw.log
+client/logs/client.log
