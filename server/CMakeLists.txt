@@ -8,7 +8,7 @@ add_executable(server server_main.cpp
         src/logger.cpp
         src/bcd2ascii.cpp
         src/pgw_sessions.cpp
-        include/http_server.h
+        src/http_server.cpp
 )
 
 # Установка библиотек
