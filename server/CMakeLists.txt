@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(server server_main.cpp
         src/json_loader.cpp
         src/logger.cpp
-        include/bcd2ascii.h
         src/bcd2ascii.cpp
+        src/pgw_sessions.cpp
 )
 
 # Установка библиотек

@@ -1,6 +1,7 @@
 #include "json_loader.h"
 #include "bcd2ascii.h"
 #include "logger.h"
+#include "pgw_sessions.h"
 
 #include <sys/socket.h>
 #include <sys/epoll.h>
@@ -11,23 +12,10 @@
 #include <cerrno>
 #include <iostream>
 #include <string>
-#include <unordered_set>// Для chek_msi
-
-
+#include <chrono>
 
 using std::cout;
 using std::endl;
-
-
-
-
-bool check_imsi(const std::string& imsi_ascii, std::unordered_set<std::string>& black_list) {
-
-    if (black_list.contains(imsi_ascii)){
-        return false;
-    }
-    return imsi_ascii.starts_with("250");
-}
 
 
 int main() {
@@ -47,6 +35,9 @@ int main() {
     const int SERVER_PORT = jsonLoader.udp_port;
     const int BUFFER_SIZE = jsonLoader.buffer_size;
     const int MAX_EVENTS = jsonLoader.max_events;
+
+    // Инициализация менеджера сессий с таймаутом 300 секунд (5 минут)
+    SessionManager session_manager(300);
 
     // Создание UDP сокета
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -100,14 +91,27 @@ int main() {
 
     epoll_event events[MAX_EVENTS];
 
+    // Переменные для таймера очистки сессий
+    auto last_cleanup = std::chrono::steady_clock::now();
+    const auto cleanup_interval = std::chrono::seconds(60); // Очистка каждую минуту
+
     while (true) {
         // Блокируем на epoll, ждём любого события на наших фд
-        int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 1000); // Таймаут 1 секунда
+
         if (nfds < 0) {
             if (errno == EINTR)
                 continue;     // если прервано сигналом, просто пересадить
             perror("epoll_wait");
             break;
+        }
+
+        // Периодическая очистка просроченных сессий
+        auto now = std::chrono::steady_clock::now();
+        if (now - last_cleanup >= cleanup_interval) {
+            session_manager.cleanup_expired_sessions();
+            session_manager.print_active_sessions();
+            last_cleanup = now;
         }
 
         for (int i = 0; i < nfds; ++i) {
@@ -147,16 +151,33 @@ int main() {
 
                     char client_ip[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
+                    uint16_t client_port = ntohs(client_addr.sin_port);
 
                     std::cout << "Получен IMSI: " << imsi
                               << " от " << client_ip
-                              << ":" << ntohs(client_addr.sin_port) << "\n";
-                    Logger::get()->info("Received IMSI {} from {}", imsi, client_ip);
+                              << ":" << client_port << "\n";
+                    Logger::get()->info("Received IMSI {} from {}:{}", imsi, client_ip, client_port);
 
-                    // Решаем, что отвечать
-                    std::string response = check_imsi(imsi, jsonLoader.blacklist)
-                                           ? "created"
-                                           : "rejected";
+                    std::string response;
+
+                    // Проверяем IMSI в чёрном списке
+                    if (!check_imsi(imsi, jsonLoader.blacklist)) {
+                        response = "rejected";
+                        Logger::get()->info("IMSI {} rejected (blacklisted or invalid)", imsi);
+                    } else {
+                        // IMSI валиден, проверяем сессию
+                        if (session_manager.session_exists(imsi)) {
+                            // Сессия уже существует - обновляем активность
+                            session_manager.update_activity(imsi);
+                            response = "session_active";
+                            Logger::get()->info("IMSI {} - session already active", imsi);
+                        } else {
+                            // Создаем новую сессию
+                            session_manager.create_session(imsi, client_ip, client_port);
+                            response = "session_created";
+                            Logger::get()->info("IMSI {} - new session created", imsi);
+                        }
+                    }
 
                     // Отправляем ответ
                     ssize_t sent = sendto(

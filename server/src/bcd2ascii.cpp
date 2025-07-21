@@ -33,3 +33,11 @@ std::string bcd2ascii(const std::vector<uint8_t>& bcd) {
 
     return result;
 }
+
+bool check_imsi(const std::string& imsi_ascii, std::unordered_set<std::string>& black_list) {
+
+    if (black_list.contains(imsi_ascii)){
+        return false;
+    }
+    return imsi_ascii.starts_with("250");
+}
