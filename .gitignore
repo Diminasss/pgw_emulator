@@ -5,3 +5,4 @@ server/logs
 client/logs
 server/logs/pgw.log
 client/logs/client.log
+.venv/

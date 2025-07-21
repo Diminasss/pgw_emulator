@@ -2,6 +2,7 @@
 #include "bcd2ascii.h"
 #include "logger.h"
 #include "pgw_sessions.h"
+#include "http_server.h"
 
 #include <sys/socket.h>
 #include <sys/epoll.h>
@@ -13,12 +14,28 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <csignal>
 
 using std::cout;
 using std::endl;
 
+// Глобальные переменные для graceful shutdown
+std::atomic<bool> server_running{true};
+HTTPServer* http_server_ptr = nullptr;
+
+void signal_handler(int signum) {
+    Logger::get()->info("Received signal {}, initiating shutdown", signum);
+    server_running.store(false);
+    if (http_server_ptr) {
+        http_server_ptr->stop();
+    }
+}
 
 int main() {
+    // Установка обработчика сигналов
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     // Загрузка JSON конфигурации
     json_loader jsonLoader;
     jsonLoader.load("config/server_config.json");
@@ -35,14 +52,26 @@ int main() {
     const int SERVER_PORT = jsonLoader.udp_port;
     const int BUFFER_SIZE = jsonLoader.buffer_size;
     const int MAX_EVENTS = jsonLoader.max_events;
+    const int HTTP_PORT = jsonLoader.http_port;
 
     // Инициализация менеджера сессий с таймаутом 300 секунд (5 минут)
     SessionManager session_manager(300);
+
+    // Инициализация и запуск HTTP сервера
+    HTTPServer http_server(&session_manager, HTTP_PORT);
+    http_server_ptr = &http_server;
+
+    // Настройка параметров graceful shutdown
+    // Удалять по 3 сессии каждые 2 секунды
+    http_server.set_shutdown_params(std::chrono::milliseconds(2000), 3);
+
+    http_server.start();
 
     // Создание UDP сокета
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("socket");
+        http_server.stop();
         return 1;
     }
 
@@ -51,6 +80,7 @@ int main() {
     if (flags < 0 || fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
         perror("fcntl O_NONBLOCK");
         close(sockfd);
+        http_server.stop();
         return 1;
     }
 
@@ -63,6 +93,7 @@ int main() {
     if (bind(sockfd, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind");
         close(sockfd);
+        http_server.stop();
         return 1;
     }
 
@@ -71,6 +102,7 @@ int main() {
     if (epoll_fd < 0) {
         perror("epoll_create1");
         close(sockfd);
+        http_server.stop();
         return 1;
     }
 
@@ -83,11 +115,14 @@ int main() {
         perror("epoll_ctl ADD");
         close(sockfd);
         close(epoll_fd);
+        http_server.stop();
         return 1;
     }
 
     std::cout << "UDP сервер с epoll запущен на порту " << SERVER_PORT << std::endl;
-    Logger::get()->info("PGW UDP server started with epoll on port " + std::to_string(SERVER_PORT));
+    std::cout << "HTTP API сервер запущен на порту " << HTTP_PORT << std::endl;
+    Logger::get()->info("PGW UDP server started with epoll on port {}", SERVER_PORT);
+    Logger::get()->info("HTTP API server started on port {}", HTTP_PORT);
 
     epoll_event events[MAX_EVENTS];
 
@@ -95,7 +130,8 @@ int main() {
     auto last_cleanup = std::chrono::steady_clock::now();
     const auto cleanup_interval = std::chrono::seconds(60); // Очистка каждую минуту
 
-    while (true) {
+    // Основной цикл сервера
+    while (server_running.load() && !http_server.is_shutdown_requested()) {
         // Блокируем на epoll, ждём любого события на наших фд
         int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 1000); // Таймаут 1 секунда
 
@@ -202,8 +238,13 @@ int main() {
         }
     }
 
+    Logger::get()->info("Main server loop ended, cleaning up...");
+
     // Очистка ресурсов
+    http_server.stop();
     close(sockfd);
     close(epoll_fd);
+
+    Logger::get()->info("Server shutdown complete");
     return 0;
 }

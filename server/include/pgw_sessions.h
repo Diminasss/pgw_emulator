@@ -41,4 +41,8 @@ public:
     size_t get_active_sessions_count() const;
     // Вывод информации о всех активных сессиях
     void print_active_sessions() const;
+    // Получение списка всех IMSI (для graceful shutdown)
+    std::vector<std::string> get_all_imsis() const;
+    // Удаление батча сессий (возвращает количество удаленных)
+    size_t remove_sessions_batch(size_t batch_size = 5);
 };

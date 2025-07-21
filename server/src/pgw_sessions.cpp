@@ -77,3 +77,31 @@ void SessionManager::print_active_sessions() const {
                             imsi, session.client_ip, session.client_port, duration.count());
     }
 }
+
+std::vector<std::string> SessionManager::get_all_imsis() const {
+    std::vector<std::string> imsis;
+    imsis.reserve(active_sessions.size());
+
+    for (const auto& [imsi, session] : active_sessions) {
+        imsis.push_back(imsi);
+    }
+
+    return imsis;
+}
+
+size_t SessionManager::remove_sessions_batch(size_t batch_size) {
+    if (active_sessions.empty()) {
+        return 0;
+    }
+
+    size_t removed = 0;
+    auto it = active_sessions.begin();
+
+    while (it != active_sessions.end() && removed < batch_size) {
+        Logger::get()->info("Graceful shutdown: removing session for IMSI {}", it->first);
+        it = active_sessions.erase(it);
+        removed++;
+    }
+
+    return removed;
+}

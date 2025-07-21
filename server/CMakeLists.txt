@@ -8,6 +8,7 @@ add_executable(server server_main.cpp
         src/logger.cpp
         src/bcd2ascii.cpp
         src/pgw_sessions.cpp
+        include/http_server.h
 )
 
 # Установка библиотек
@@ -29,6 +30,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json)
+#cpp_http
+FetchContent_Declare(
+        httplib
+        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib
+        GIT_TAG v0.23.1
+)
+FetchContent_MakeAvailable(httplib)
+target_link_libraries(server PRIVATE httplib::httplib)
 
 # Копирование json в build папку
 configure_file(
