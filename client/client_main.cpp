@@ -8,19 +8,23 @@
 #include <cstring>
 #include "ascii2bcd.h"
 #include "logger.h"
+#include "json_loader.h"
 
 
 
 int main(int argc, char* argv[]) {
+    json_loader jsonLoader;
+    jsonLoader.load("config/client_config.json");
 #ifdef NDEBUG
     Logger::init(jsonLoader.log_file, jsonLoader.log_level);
-    Logger::get()->info("Server prepared to start in RELEASE mode");
+    Logger::get()->info("Client prepared to start in RELEASE mode");
 #else
     Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/client.log", "info");
-    Logger::get()->info("Server prepared to start in DEBUG mode");
+    Logger::get()->info("Client prepared to start in DEBUG mode");
 #endif
-    std::string server_ip = "127.0.0.1";
-    int server_port = 9000;
+
+    std::string server_ip = jsonLoader.server_ip;
+    int server_port = jsonLoader.server_port;
     std::string imsi = "250123456"; // IMSI по умолчанию
 
     // Простой парсинг аргументов
