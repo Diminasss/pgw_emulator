@@ -1,4 +1,5 @@
 #include "http_server.h"
+#include "cdr_logger.h"
 #include <thread>
 
 HTTPServer::HTTPServer(SessionManager* sm, int port)
@@ -69,6 +70,11 @@ void HTTPServer::handle_stop(const httplib::Request& req, httplib::Response& res
     }
 
     Logger::get()->info("HTTP API: Graceful shutdown requested via /stop");
+
+    // Записываем CDR о начале graceful shutdown
+    CDRLogger::write_cdr("SYSTEM", CDRAction::GRACEFUL_SHUTDOWN_START,
+                         "active_sessions:" + std::to_string(session_manager->get_active_sessions_count()));
+
     shutdown_requested.store(true);
 
     // Запускаем graceful shutdown в отдельном потоке
@@ -109,22 +115,15 @@ void HTTPServer::graceful_shutdown() {
     }
 
     Logger::get()->info("Graceful shutdown completed, all sessions removed");
+
+    // Записываем CDR об окончании graceful shutdown
+    CDRLogger::write_cdr("SYSTEM", CDRAction::GRACEFUL_SHUTDOWN_END,
+                         "remaining_sessions:" + std::to_string(session_manager->get_active_sessions_count()));
 }
 
 size_t HTTPServer::remove_sessions_batch() {
-    // Эта функция должна быть добавлена в SessionManager
-    // Пока используем простую реализацию
-    size_t removed = 0;
-    size_t current_batch = 0;
-
-    // Получаем список IMSI для удаления
-    std::vector<std::string> to_remove;
-
-    // В идеале нужен метод get_all_imsis() в SessionManager
-    // Пока просто удаляем старые сессии
-    session_manager->cleanup_expired_sessions();
-
-    return removed;
+    // Используем функцию SessionManager для удаления батча сессий
+    return session_manager->remove_sessions_batch(sessions_per_batch);
 }
 
 void HTTPServer::start() {

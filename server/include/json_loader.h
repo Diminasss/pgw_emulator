@@ -12,7 +12,8 @@ public:
     int session_timeout_sec;
     std::string cdr_file;
     int http_port;
-    int graceful_shutdown_rate;
+    int graceful_shutdown_batch_size;
+    int graceful_shutdown_rate_sec;
     std::string log_file;
     std::string log_level;
     int max_events;

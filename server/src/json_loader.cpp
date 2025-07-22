@@ -16,7 +16,8 @@ void json_loader::load(const std::string &path) {
         session_timeout_sec = config.at("session_timeout_sec").get<int>();
         cdr_file = config.at("cdr_file").get<std::string>();
         http_port = config.at("http_port").get<int>();
-        graceful_shutdown_rate = config.at("graceful_shutdown_rate").get<int>();
+        graceful_shutdown_rate_sec = config.at("graceful_shutdown_rate_sec").get<int>();
+        graceful_shutdown_batch_size = config.at("graceful_shutdown_batch_size").get<int>();
         log_file = config.at("log_file").get<std::string>();
         log_level = config.at("log_level").get<std::string>();
         blacklist = config.at("blacklist").get<std::unordered_set<std::string>>();

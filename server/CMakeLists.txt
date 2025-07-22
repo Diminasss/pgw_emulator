@@ -9,6 +9,7 @@ add_executable(server server_main.cpp
         src/bcd2ascii.cpp
         src/pgw_sessions.cpp
         src/http_server.cpp
+        src/cdr_logger.cpp
 )
 
 # Установка библиотек

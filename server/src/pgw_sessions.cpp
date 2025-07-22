@@ -1,4 +1,5 @@
 #include "pgw_sessions.h"
+#include "cdr_logger.h"
 
 PGWSession::PGWSession(std::string imsi, std::string ip, uint16_t port)
         : imsi(std::move(imsi)), client_ip(std::move(ip)), client_port(port),
@@ -11,18 +12,22 @@ bool SessionManager::create_session(const std::string& imsi, const std::string& 
         // Сессия уже существует - обновляем время последней активности
         it->second.last_activity = std::chrono::steady_clock::now();
         Logger::get()->info("Session for IMSI {} already exists, updated activity time", imsi);
+
+        // Записываем CDR об обновлении сессии
+        std::string additional_info = "from " + client_ip + ":" + std::to_string(client_port);
+        CDRLogger::write_cdr(imsi, CDRAction::SESSION_UPDATE, additional_info);
+
         return false; // Сессия уже была
     }
-//        if (active_sessions.find(imsi) != active_sessions.end()) {
-//            // Сессия уже существует - обновляем время последней активности
-//            active_sessions[imsi].last_activity = std::chrono::steady_clock::now();
-//            Logger::get()->info("Session for IMSI {} already exists, updated activity time", imsi);
-//            return false; // Сессия уже была
-//        }
 
     // Создаем новую сессию
     active_sessions.emplace(imsi, PGWSession(imsi, client_ip, client_port));
     Logger::get()->info("Created new session for IMSI {} from {}:{}", imsi, client_ip, client_port);
+
+    // Записываем CDR о создании сессии
+    std::string additional_info = "from " + client_ip + ":" + std::to_string(client_port);
+    CDRLogger::write_cdr(imsi, CDRAction::SESSION_CREATE, additional_info);
+
     return true; // Новая сессия создана
 }
 
@@ -34,6 +39,10 @@ void SessionManager::delete_session(const std::string& imsi) {
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
         Logger::get()->info("Deleting session for IMSI {}", imsi);
+
+        // Записываем CDR об удалении сессии
+        CDRLogger::write_cdr(imsi, CDRAction::SESSION_DELETE);
+
         active_sessions.erase(it);
     }
 }
@@ -49,6 +58,11 @@ void SessionManager::cleanup_expired_sessions() {
         if (time_diff >= session_timeout) {
             Logger::get()->info("Session for IMSI {} expired (inactive for {} seconds)",
                                 it->first, time_diff.count());
+
+            // Записываем CDR об истечении сессии
+            std::string additional_info = "timeout " + std::to_string(time_diff.count()) + "s";
+            CDRLogger::write_cdr(it->first, CDRAction::SESSION_EXPIRE, additional_info);
+
             it = active_sessions.erase(it);
         } else {
             ++it;
@@ -99,6 +113,10 @@ size_t SessionManager::remove_sessions_batch(size_t batch_size) {
 
     while (it != active_sessions.end() && removed < batch_size) {
         Logger::get()->info("Graceful shutdown: removing session for IMSI {}", it->first);
+
+        // Записываем CDR об удалении сессии при graceful shutdown
+        CDRLogger::write_cdr(it->first, CDRAction::SESSION_DELETE, "graceful_shutdown");
+
         it = active_sessions.erase(it);
         removed++;
     }

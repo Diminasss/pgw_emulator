@@ -1,5 +1,4 @@
-#ifndef HTTP_SERVER_H
-#define HTTP_SERVER_H
+#pragma once
 
 #include <httplib.h>
 #include <thread>
@@ -7,6 +6,7 @@
 #include <chrono>
 #include "pgw_sessions.h"
 #include "logger.h"
+#include "cdr_logger.h"
 
 class HTTPServer {
 private:
@@ -40,5 +40,3 @@ public:
     bool is_shutdown_requested() const;
     void set_shutdown_params(std::chrono::milliseconds interval, size_t batch_size);
 };
-
-#endif // HTTP_SERVER_H

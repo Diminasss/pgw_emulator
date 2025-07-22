@@ -16,8 +16,6 @@
 #include <chrono>
 #include <csignal>
 
-using std::cout;
-using std::endl;
 
 // Глобальные переменные для graceful shutdown
 std::atomic<bool> server_running{true};
@@ -43,9 +41,11 @@ int main() {
     // Инициализация логгера
 #ifdef NDEBUG
     Logger::init(jsonLoader.log_file, jsonLoader.log_level);
+    CDRLogger::init(jsonLoader.cdr_file);
     Logger::get()->info("Server prepared to start in RELEASE mode");
 #else
-    Logger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/pgw.logs", "info");
+    Logger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/pgw.log", "info");
+    CDRLogger::init("/home/diminas/CLionProjects/pgw_emulator/server/logs/cdr.csv");
     Logger::get()->info("Server prepared to start in DEBUG mode");
 #endif
 
@@ -53,17 +53,18 @@ int main() {
     const int BUFFER_SIZE = jsonLoader.buffer_size;
     const int MAX_EVENTS = jsonLoader.max_events;
     const int HTTP_PORT = jsonLoader.http_port;
+    const int SESSION_TIMEOUT = jsonLoader.session_timeout_sec;
 
-    // Инициализация менеджера сессий с таймаутом 300 секунд (5 минут)
-    SessionManager session_manager(300);
+    // Инициализация менеджера сессий с длительностью жизни в секундах
+    SessionManager session_manager(SESSION_TIMEOUT);
 
     // Инициализация и запуск HTTP сервера
     HTTPServer http_server(&session_manager, HTTP_PORT);
     http_server_ptr = &http_server;
 
     // Настройка параметров graceful shutdown
-    // Удалять по 3 сессии каждые 2 секунды
-    http_server.set_shutdown_params(std::chrono::milliseconds(2000), 3);
+    // Удалять по batch_size сессии каждые rep секунды
+    http_server.set_shutdown_params(std::chrono::seconds(jsonLoader.graceful_shutdown_rate_sec), jsonLoader.graceful_shutdown_batch_size);
 
     http_server.start();
 
@@ -122,7 +123,6 @@ int main() {
     std::cout << "UDP сервер с epoll запущен на порту " << SERVER_PORT << std::endl;
     std::cout << "HTTP API сервер запущен на порту " << HTTP_PORT << std::endl;
     Logger::get()->info("PGW UDP server started with epoll on port {}", SERVER_PORT);
-    Logger::get()->info("HTTP API server started on port {}", HTTP_PORT);
 
     epoll_event events[MAX_EVENTS];
 
@@ -188,10 +188,12 @@ int main() {
                     char client_ip[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip));
                     uint16_t client_port = ntohs(client_addr.sin_port);
-
+#ifdef NDEBUG
+#else
                     std::cout << "Получен IMSI: " << imsi
                               << " от " << client_ip
                               << ":" << client_port << "\n";
+#endif
                     Logger::get()->info("Received IMSI {} from {}:{}", imsi, client_ip, client_port);
 
                     std::string response;
@@ -203,12 +205,12 @@ int main() {
                     } else {
                         // IMSI валиден, проверяем сессию
                         if (session_manager.session_exists(imsi)) {
-                            // Сессия уже существует - обновляем активность
+                            // Если сессия уже существует, обновляем активность для продолжения существования сессии
                             session_manager.update_activity(imsi);
                             response = "session_active";
                             Logger::get()->info("IMSI {} - session already active", imsi);
                         } else {
-                            // Создаем новую сессию
+                            // Создание новой сессии
                             session_manager.create_session(imsi, client_ip, client_port);
                             response = "session_created";
                             Logger::get()->info("IMSI {} - new session created", imsi);

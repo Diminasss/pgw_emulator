@@ -1,11 +1,13 @@
 #pragma once
 
 #include "logger.h"
+#include "cdr_logger.h"
 
 #include <string>
 #include <cstdint>
 #include <chrono>
 #include <unordered_map>
+#include <vector>
 
 // Структура для хранения информации о сессии
 struct PGWSession {
