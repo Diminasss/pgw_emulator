@@ -5,3 +5,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_subdirectory(server)
 add_subdirectory(client)
+option(BUILD_TESTS "Build tests" ON)
+
+if(BUILD_TESTS)
+    # Добавляем подкаталог с тестами
+    add_subdirectory(server/test)
+endif()
