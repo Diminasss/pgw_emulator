@@ -5,11 +5,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstring>
 #include "ascii2bcd.h"
 #include "logger.h"
 #include "json_loader.h"
-
 
 
 int main(int argc, char* argv[]) {
@@ -25,7 +23,14 @@ int main(int argc, char* argv[]) {
 
     std::string server_ip = jsonLoader.server_ip;
     int server_port = jsonLoader.server_port;
-    std::string imsi = "250123456"; // IMSI по умолчанию
+    std::string imsi;
+    if (argc == 2){
+        imsi = argv[1];
+    }else{
+        imsi = "250123456"; // IMSI по умолчанию
+    }
+
+    Logger::get()->info("Подключение к серверу {}:{}", server_ip, server_port);
 
     // Простой парсинг аргументов
     if (argc >= 2) {
@@ -98,7 +103,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Получен ответ: '" << response << "'" << std::endl;
     std::cout << "Размер ответа: " << received << " байт" << std::endl;
-
+    spdlog::shutdown();
     close(sockfd);
     return 0;
 }
