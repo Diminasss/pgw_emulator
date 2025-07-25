@@ -1,0 +1,6 @@
+{
+  "server_ip": "127.0.0.1",
+  "server_port": 9000,
+  "log_file": "client.log",
+  "log_level": "info"
+}
