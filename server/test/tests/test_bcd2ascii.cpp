@@ -4,23 +4,30 @@
 
 // Тест на корректную конвертацию BCD → ASCII
 TEST(BCD2AsciiTest, ConvertsCorrectly) {
-    std::vector<uint8_t> bcd = {0x21, 0x43, 0x65, 0x7F};  // = "1234567"
+    std::vector<uint8_t> bcd = {0x21, 0x43, 0x65, 0x78, 0x9F};
     std::string result = bcd2ascii(bcd);
-    EXPECT_EQ(result, "2143657");
+    EXPECT_EQ(result, "214365789");
 }
-
+TEST(BCD2AsciiTest, ConvertsEvenCorrectly) {
+    std::vector<uint8_t> bcd = {0x21, 0x43, 0x65, 0x78};
+    std::string result = bcd2ascii(bcd);
+    EXPECT_EQ(result, "21436578");
+}
 TEST(BCD2AsciiTest, HandlesPaddingFNibble) {
-    std::vector<uint8_t> bcd = {0x21, 0x4F};  // "12", затем padding
+    std::vector<uint8_t> bcd = {0x21, 0x4F};
     std::string result = bcd2ascii(bcd);
     EXPECT_EQ(result, "214");
 }
 
-TEST(BCD2AsciiTest, StopsOnInvalidNibble) {
+TEST(BCD2AsciiTest, StopsOnInvalidSecondNibble) {
     std::vector<uint8_t> bcd = {0x2A};  // low nibble = 0xA (invalid)
-    std::string result = bcd2ascii(bcd);
-    EXPECT_EQ(result, "2");  // только один символ, потом break
-}
 
+    EXPECT_THROW(bcd2ascii(bcd), std::runtime_error);
+}
+TEST(BCD2AsciiTest, StopsOnInvalidFirstNibble) {
+    std::vector<uint8_t> bcd = {0xA2};  // low nibble = 0xA (invalid)
+    EXPECT_THROW(bcd2ascii(bcd), std::runtime_error);
+}
 TEST(BCD2AsciiTest, ReturnsEmptyForEmptyInput) {
     std::vector<uint8_t> bcd = {};
     std::string result = bcd2ascii(bcd);
