@@ -4,7 +4,7 @@ import time
 import unittest
 
 
-class TestExample(unittest.TestCase):
+class TestCheckSubscriber(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Путь к скомпилированному приложению сервера
@@ -15,6 +15,10 @@ class TestExample(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.process.terminate()
+        try:
+            cls.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            cls.process.kill()
 
     def test_1_not_active_imsi(self):
         imsi = "123456789"
