@@ -46,7 +46,14 @@ TEST(CheckImsiTest, ReturnsTrueIfNotInBlacklistAndStartsWith250) {
     EXPECT_TRUE(check_imsi("250123456789012", blacklist));
 }
 
-TEST(CheckImsiTest, ReturnsFalseIfNotStartsWith250) {
+TEST(CheckImsiTest, ReturnsFalseIfSizeOver15) {
     std::unordered_set<std::string> blacklist;
-    EXPECT_FALSE(check_imsi("123456789012345", blacklist));
+    std::string fake_imsi(16, '1'); // Строка из 16 единиц
+    EXPECT_FALSE(check_imsi(fake_imsi, blacklist));
+}
+
+TEST(CheckImsiTest, ReturnsFalseIfSize15) {
+    std::unordered_set<std::string> blacklist;
+    std::string fake_imsi(15, '1'); // Строка из 15 единиц
+    EXPECT_TRUE(check_imsi(fake_imsi, blacklist));
 }
