@@ -2,7 +2,7 @@ import requests
 import subprocess
 import time
 import unittest
-from typing import List
+
 
 # Путь к скомпилированному приложению сервера
 server_application_path: str = "../../../cmake-build-debug/server/server"
@@ -31,7 +31,7 @@ class TestStatus(unittest.TestCase):
         self.assertEqual(response.text, "Status: running\nActive sessions: 0\n")
 
     def test_2_status_two(self) -> None:
-        imsis: List[str] = ["123456789", "12345678910"]
+        imsis: list[str] = ["123456789", "12345678910"]
 
         for imsi in imsis:
             process: subprocess.Popen = subprocess.Popen([client_application_path, imsi])
