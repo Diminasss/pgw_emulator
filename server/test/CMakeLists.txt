@@ -26,6 +26,7 @@ set(TEST_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_bcd2ascii.cpp
         #${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pgw_sessions.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_cdr_logger.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_json_loader.cpp
 )
 
 add_executable(server_tests ${SERVER_SOURCES} ${TEST_SOURCES})

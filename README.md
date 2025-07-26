@@ -59,6 +59,7 @@
         ├── test_main.cpp                             # main функция для тестирования
         └── tests                                     # Тесты для сервера
             ├── test_bcd2ascii.cpp 
+            ├── test_json_loader.cpp
             └── test_cdr_logger.cpp
 ```
 ## Описание проекта
