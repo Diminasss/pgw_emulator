@@ -151,9 +151,9 @@ int main() {
         }
 
         for (int i = 0; i < nfds; ++i) {
-            // Проверяем, что это событие на нашем UDP‑сокете
+            // Проверка, что это событие на нашем UDP‑сокете
             if ((events[i].events & EPOLLIN) && events[i].data.fd == sockfd) {
-                // Edge‑triggered: читаем до EAGAIN/EWOULDBLOCK
+                // Edge‑triggered: читение до EAGAIN/EWOULDBLOCK
                 while (true) {
                     uint8_t buffer[BUFFER_SIZE];
                     sockaddr_in client_addr{};
@@ -168,7 +168,7 @@ int main() {
 
                     if (received < 0) {
                         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                            // больше данных нет — выходим из inner‑loop
+                            // больше данных нет - выход из inner‑loop
                             break;
                         } else {
                             perror("recvfrom");
@@ -180,9 +180,9 @@ int main() {
                         break;
                     }
 
-                    // Преобразуем raw‑буфер в вектор
+                    // Преобразование raw‑буфер в вектор
                     std::vector<uint8_t> bcd_data(buffer, buffer + received);
-                    // Конвертируем BCD -> ASCII IMSI
+                    // Конвертация BCD -> ASCII IMSI
                     std::string imsi = bcd2ascii(bcd_data);
 
                     char client_ip[INET_ADDRSTRLEN];
@@ -198,21 +198,21 @@ int main() {
 
                     std::string response;
 
-                    // Проверяем IMSI в чёрном списке
+                    // Проверка IMSI в чёрном списке
                     if (!check_imsi(imsi, jsonLoader.blacklist)) {
                         response = "rejected";
                         Logger::get()->info("IMSI {} rejected (blacklisted or invalid)", imsi);
                     } else {
-                        // IMSI валиден, проверяем сессию
+                        // IMSI валиден, проверка сессии
                         if (session_manager.session_exists(imsi)) {
-                            // Если сессия уже существует, обновляем активность для продолжения существования сессии
+                            // Если сессия уже существует, обновляется активность для продолжения существования сессии
                             session_manager.update_activity(imsi);
-                            response = "session_active";
+                            response = "active";
                             Logger::get()->info("IMSI {} - session already active", imsi);
                         } else {
                             // Создание новой сессии
                             session_manager.create_session(imsi, client_ip, client_port);
-                            response = "session_created";
+                            response = "created";
                             Logger::get()->info("IMSI {} - new session created", imsi);
                         }
                     }
