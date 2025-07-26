@@ -89,7 +89,13 @@ int main() {
     sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    if (inet_pton(AF_INET, jsonLoader.udp_ip.c_str(), &server_addr.sin_addr) != 1) {
+
+        std::cerr << "Ошибка: некорректный IP-адрес в конфиге: " << jsonLoader.udp_ip << std::endl;
+        Logger::get()->error("main: incorrect ip address in config");
+        return 1; // Завершение работы
+    }
+
 
     if (bind(sockfd, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind");
