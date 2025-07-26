@@ -7,11 +7,11 @@
 #include <vector>
 #include "ascii2bcd.h"
 #include "logger.h"
-#include "json_loader.h"
+#include "client_json_loader.h"
 
 
 int main(int argc, char* argv[]) {
-    json_loader jsonLoader;
+    client_json_loader jsonLoader;
     jsonLoader.load("config/client_config.json");
 #ifdef NDEBUG
     Logger::init(jsonLoader.log_file, jsonLoader.log_level);

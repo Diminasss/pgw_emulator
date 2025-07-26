@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <nlohmann/json.hpp>
 
-class json_loader {
+class client_json_loader {
 public:
     std::string server_ip;
     int server_port;

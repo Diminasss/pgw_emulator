@@ -1,6 +1,6 @@
-#include "json_loader.h"
+#include "client_json_loader.h"
 
-void json_loader::load(const std::string &path) {
+void client_json_loader::load(const std::string &path) {
     std::ifstream file(path);
     if (!file) {
         throw std::runtime_error("Could not open config file");

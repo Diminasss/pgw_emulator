@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(client client_main.cpp
         src/ascii2bcd.cpp
         src/logger.cpp
-        src/json_loader.cpp
+        src/client_json_loader.cpp
 )
 
 # Копирование json в build папку
