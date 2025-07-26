@@ -4,10 +4,16 @@
 std::shared_ptr<spdlog::logger> Logger::logger = nullptr;
 
 void Logger::init(const std::string& filename, const std::string& level_str) {
+    if (logger){
+        logger->error("Logger: Logger has already initialised");
+        throw std::runtime_error("Logger has already initialised");
+    }
+    if (filename.empty() || level_str.empty()){
+        throw std::invalid_argument("Logger: Empty file path or level arguments");
+    }
     try {
         // Инициализация пула потоков для асинхронного логгера (размер очереди 8192, 1 поток)
         spdlog::init_thread_pool(8192, 1);
-
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, true);
 
         logger = std::make_shared<spdlog::async_logger>(
@@ -45,8 +51,8 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
 std::shared_ptr<spdlog::logger> Logger::get() {
     if (!logger) {
         std::cerr << "Logger not initialized, using default parameters." << std::endl;
-        logger->warn("Logger: Logger not initialized. Using default parameters. (pgw.logs + info)");
-        init("pgw.logs", "info");
+        logger->error("Logger: Logger not initialized.");
+        throw std::logic_error("Logger: Logger not initialized. You cant get it");
     }
     return logger;
 }

@@ -42,7 +42,7 @@ bool check_imsi(const std::string& imsi_ascii, std::unordered_set<std::string>& 
     if (black_list.contains(imsi_ascii)){
         return false;
     }
-    if (imsi_ascii.size() > 15){
+    if (imsi_ascii.size() < 7 || imsi_ascii.size() > 15){
         return false;
     }
     return true;

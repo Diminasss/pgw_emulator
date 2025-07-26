@@ -5,6 +5,14 @@
 std::shared_ptr<spdlog::logger> CDRLogger::cdr_logger = nullptr;
 
 void CDRLogger::init(const std::string& filename) {
+    if (cdr_logger){
+        Logger::get()->error("CDRLogger: CDRLogger has already initialised");
+        throw std::runtime_error("CDRLogger has already initialised");
+    }
+    if (filename.empty()){
+        Logger::get()->error("CDRLogger: Empty file path argument");
+        throw std::invalid_argument("CDRLogger: Empty file path argument");
+    }
     try {
         // Используем тот же thread pool что и основной логгер
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, true);
@@ -33,8 +41,8 @@ void CDRLogger::init(const std::string& filename) {
 
 std::shared_ptr<spdlog::logger> CDRLogger::get() {
     if (!cdr_logger) {
-        std::cerr << "CDR Logger not initialized, using default parameters." << std::endl;
-        init();
+        Logger::get()->error("CDRLogger: CDR Logger not initialized");
+        throw std::logic_error("CDRLogger: CDRLogger not initialized. You cant get it");
     }
     return cdr_logger;
 }
