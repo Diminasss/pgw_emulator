@@ -60,6 +60,7 @@
         └── tests                                     # Тесты для сервера
             ├── test_bcd2ascii.cpp 
             ├── test_json_loader.cpp
+            ├── test_session_manager.cpp
             └── test_cdr_logger.cpp
 ```
 ## Описание проекта
