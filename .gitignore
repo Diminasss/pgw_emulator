@@ -6,3 +6,4 @@ client/logs
 server/logs/pgw.log
 client/logs/client.log
 .venv/
+client/py_client/__pycache__

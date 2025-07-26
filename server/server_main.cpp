@@ -134,7 +134,7 @@ int main() {
 
     // Переменные для таймера очистки сессий
     auto last_cleanup = std::chrono::steady_clock::now();
-    const auto cleanup_interval = std::chrono::seconds(60); // Очистка каждую минуту
+    const auto cleanup_interval = std::chrono::seconds(5); // Очистка каждые 5 секунд
 
     // Основной цикл сервера
     while (server_running.load() && !http_server.is_shutdown_requested()) {
