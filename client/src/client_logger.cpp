@@ -1,9 +1,9 @@
-#include "logger.h"
+#include "client_logger.h"
 
 // Статическая переменная для логгера
-std::shared_ptr<spdlog::logger> Logger::logger = nullptr;
+std::shared_ptr<spdlog::logger> Client_Logger::logger = nullptr;
 
-void Logger::init(const std::string& filename, const std::string& level_str) {
+void Client_Logger::init(const std::string& filename, const std::string& level_str) {
     try {
         // Инициализация пула потоков для асинхронного логгера (размер очереди 8192, 1 поток)
         spdlog::init_thread_pool(8192, 1);
@@ -31,22 +31,22 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
         std::cout << "Введён уровень: " << level_str << std::endl;
         std::cout << "Установлен уровень логгирования: " << level_sv_str << std::endl;
 #endif
-        logger->info("Logger initialised. Level: {}", level_sv_str);
+        logger->info("Client_Logger initialised. Level: {}", level_sv_str);
     } catch (const spdlog::spdlog_ex& ex) {
         std::cerr << "Log init failed: " << ex.what() << std::endl;
     }
 }
 
-std::shared_ptr<spdlog::logger> Logger::get() {
+std::shared_ptr<spdlog::logger> Client_Logger::get() {
     if (!logger) {
-        std::cerr << "Logger not initialized, using default parameters." << std::endl;
-        logger->warn("Logger not initialized. Using default parameters. (pgw.logs + info)");
+        std::cerr << "Client_Logger not initialized, using default parameters." << std::endl;
+        logger->warn("Client_Logger not initialized. Using default parameters. (pgw.logs + info)");
         init("pgw.logs", "info");
     }
     return logger;
 }
 
-spdlog::level::level_enum Logger::parse_level(const std::string& level_str) {
+spdlog::level::level_enum Client_Logger::parse_level(const std::string& level_str) {
     static const std::map<std::string, spdlog::level::level_enum> level_map = {
             {"trace", spdlog::level::trace},
             {"debug", spdlog::level::debug},

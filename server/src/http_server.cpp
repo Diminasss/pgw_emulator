@@ -99,30 +99,29 @@ void HTTPServer::graceful_shutdown() {
     Logger::get()->info("Starting graceful shutdown process");
 
     while (session_manager->get_active_sessions_count() > 0) {
-        // Удаляем сессии батчами
+        // Удаление сессий батчами
         auto removed = remove_sessions_batch();
 
-        Logger::get()->info("Graceful shutdown: removed {} sessions, {} remaining",
-                            removed, session_manager->get_active_sessions_count());
+        Logger::get()->info("Graceful shutdown: removed {} sessions, {} remaining",removed, session_manager->get_active_sessions_count());
 
         if (removed == 0) {
-            // Если не удалось удалить сессии, выходим из цикла
+            // Если не удалось удалить сессии, выход из цикла
             break;
         }
 
-        // Ждем перед следующим батчем
+        // ожидание перед следующим батчем
         std::this_thread::sleep_for(shutdown_interval);
     }
 
     Logger::get()->info("Graceful shutdown completed, all sessions removed");
 
-    // Записываем CDR об окончании graceful shutdown
+    // Запись CDR об окончании graceful shutdown
     CDRLogger::write_cdr("SYSTEM", CDRAction::GRACEFUL_SHUTDOWN_END,
                          "remaining_sessions:" + std::to_string(session_manager->get_active_sessions_count()));
 }
 
 size_t HTTPServer::remove_sessions_batch() {
-    // Используем функцию SessionManager для удаления батча сессий
+    // Использование функции SessionManager для удаления батча сессий
     return session_manager->remove_sessions_batch(sessions_per_batch);
 }
 
@@ -143,7 +142,7 @@ void HTTPServer::start() {
         }
     });
 
-    // Даем серверу время на запуск
+    // Время на запуск для сервера
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     Logger::get()->info("HTTP Server thread started on port {}", port_);
 }

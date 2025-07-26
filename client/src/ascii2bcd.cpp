@@ -8,7 +8,7 @@ std::vector<uint8_t> ascii2bcd(std::string ascii) {
     for (char c : ascii) {
         if (not(c >= '0' && c <= '9')) {
             std::cerr << "Символ в строке IMSI не является числом";
-            Logger::get()->error("IMSI {} contains not numeral symbols", ascii);
+            Client_Logger::get()->error("IMSI {} contains not numeral symbols", ascii);
             throw std::invalid_argument("IMSI " + ascii + " contains not numeral symbols");
         }
     }

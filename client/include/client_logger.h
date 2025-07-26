@@ -7,7 +7,7 @@
 #include <map>
 #include <iostream>
 
-class Logger {
+class Client_Logger {
 public:
     static std::shared_ptr<spdlog::logger> get();
     static void init(const std::string& filename, const std::string& level_str);

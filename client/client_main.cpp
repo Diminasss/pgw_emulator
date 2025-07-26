@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include "ascii2bcd.h"
-#include "logger.h"
+#include "client_logger.h"
 #include "client_json_loader.h"
 
 
@@ -14,11 +14,11 @@ int main(int argc, char* argv[]) {
     client_json_loader jsonLoader;
     jsonLoader.load("config/client_config.json");
 #ifdef NDEBUG
-    Logger::init(jsonLoader.log_file, jsonLoader.log_level);
-    Logger::get()->info("Client prepared to start in RELEASE mode");
+    Client_Logger::init(jsonLoader.log_file, jsonLoader.log_level);
+    Client_Logger::get()->info("Client prepared to start in RELEASE mode");
 #else
-    Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/client.log", "info");
-    Logger::get()->info("Client prepared to start in DEBUG mode");
+    Client_Logger::init("/home/diminas/CLionProjects/pgw_emulator/client/logs/client.log", "info");
+    Client_Logger::get()->info("Client prepared to start in DEBUG mode");
 #endif
 
     std::string server_ip = jsonLoader.server_ip;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         imsi = "250123456"; // IMSI по умолчанию
     }
 
-    Logger::get()->info("Подключение к серверу {}:{}", server_ip, server_port);
+    Client_Logger::get()->info("Подключение к серверу {}:{}", server_ip, server_port);
 
     // Простой парсинг аргументов
     if (argc >= 2) {

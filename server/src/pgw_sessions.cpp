@@ -57,7 +57,7 @@ void SessionManager::cleanup_expired_sessions() {
 
         if (time_diff >= session_timeout) {
             Logger::get()->info("Session for IMSI {} expired (inactive for {} seconds)",
-                                it->first, time_diff.count());
+                                       it->first, time_diff.count());
 
             // Записываем CDR об истечении сессии
             std::string additional_info = "timeout " + std::to_string(time_diff.count()) + "s";
@@ -88,7 +88,7 @@ void SessionManager::print_active_sessions() const {
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
                 now - session.created_time);
         Logger::get()->info("  IMSI: {} from {}:{}, active for {} seconds",
-                            imsi, session.client_ip, session.client_port, duration.count());
+                                   imsi, session.client_ip, session.client_port, duration.count());
     }
 }
 

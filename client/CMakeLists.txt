@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 # Добавление исполняемых файлов в client
 add_executable(client client_main.cpp
         src/ascii2bcd.cpp
-        src/logger.cpp
+        src/client_logger.cpp
         src/client_json_loader.cpp
 )
 

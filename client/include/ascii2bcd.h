@@ -5,6 +5,6 @@
 #include <cstdint>
 #include <stdexcept>
 #include <iostream>
-#include "logger.h"
+#include "client_logger.h"
 
 std::vector<uint8_t> ascii2bcd(std::string ascii);
