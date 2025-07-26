@@ -35,6 +35,8 @@ bool SessionManager::session_exists(const std::string& imsi) {
     return active_sessions.find(imsi) != active_sessions.end();
 }
 
+// На будущее мб
+/*
 void SessionManager::delete_session(const std::string& imsi) {
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
@@ -46,7 +48,7 @@ void SessionManager::delete_session(const std::string& imsi) {
         active_sessions.erase(it);
     }
 }
-
+*/
 void SessionManager::cleanup_expired_sessions() {
     auto now = std::chrono::steady_clock::now();
     auto it = active_sessions.begin();
@@ -92,6 +94,8 @@ void SessionManager::print_active_sessions() const {
     }
 }
 
+// На будущее мб
+/*
 std::vector<std::string> SessionManager::get_all_imsis() const {
     std::vector<std::string> imsis;
     imsis.reserve(active_sessions.size());
@@ -102,7 +106,7 @@ std::vector<std::string> SessionManager::get_all_imsis() const {
 
     return imsis;
 }
-
+*/
 size_t SessionManager::remove_sessions_batch(size_t batch_size) {
     if (active_sessions.empty()) {
         return 0;

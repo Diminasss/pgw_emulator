@@ -169,7 +169,7 @@ bool HTTPServer::is_shutdown_requested() const {
     return shutdown_requested.load();
 }
 
-void HTTPServer::set_shutdown_params(std::chrono::milliseconds interval, size_t batch_size) {
+void HTTPServer::set_shutdown_params(std::chrono::seconds interval, size_t batch_size) {
     shutdown_interval = interval;
     sessions_per_batch = batch_size;
 }

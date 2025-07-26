@@ -18,7 +18,7 @@ private:
 
     // Параметры graceful shutdown
     std::thread shutdown_thread;
-    std::chrono::milliseconds shutdown_interval{1000}; // удаление сессий каждую секунду
+    std::chrono::seconds shutdown_interval{1}; // удаление сессий каждую секунду
     size_t sessions_per_batch{5}; // удалять по 5 сессий за раз
 
     int port_;
@@ -38,5 +38,5 @@ public:
     void start();
     void stop();
     bool is_shutdown_requested() const;
-    void set_shutdown_params(std::chrono::milliseconds interval, size_t batch_size);
+    void set_shutdown_params(std::chrono::seconds interval, size_t batch_size);
 };
