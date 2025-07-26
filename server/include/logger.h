@@ -1,10 +1,11 @@
 #pragma once
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 
 class Logger {

@@ -28,39 +28,46 @@ void Logger::init(const std::string& filename, const std::string& level_str) {
 #ifdef NDEBUG
 
 #else
+        // Если установлен DEBUG
         std::cout << "Введён уровень: " << level_str << std::endl;
         std::cout << "Установлен уровень логгирования: " << level_sv_str << std::endl;
 #endif
-        logger->info("Logger initialised. Level: {}", level_sv_str);
+        logger->info("Logger: Logger initialised. Level: {}", level_sv_str);
     } catch (const spdlog::spdlog_ex& ex) {
         std::cerr << "Log init failed: " << ex.what() << std::endl;
+        try{
+            logger->error("Logger: Log init failed error");
+        } catch (...) {}
+        throw std::runtime_error("Log init failed error");
     }
 }
 
 std::shared_ptr<spdlog::logger> Logger::get() {
     if (!logger) {
         std::cerr << "Logger not initialized, using default parameters." << std::endl;
-        logger->warn("Logger not initialized. Using default parameters. (pgw.logs + info)");
+        logger->warn("Logger: Logger not initialized. Using default parameters. (pgw.logs + info)");
         init("pgw.logs", "info");
     }
     return logger;
 }
 
 spdlog::level::level_enum Logger::parse_level(const std::string& level_str) {
-    static const std::map<std::string, spdlog::level::level_enum> level_map = {
+    static const std::unordered_map<std::string, spdlog::level::level_enum> level_map = {
             {"trace", spdlog::level::trace},
             {"debug", spdlog::level::debug},
             {"info", spdlog::level::info},
             {"warn", spdlog::level::warn},
             {"error", spdlog::level::err},
+            {"err", spdlog::level::err},
             {"critical", spdlog::level::critical},
             {"off", spdlog::level::off}
     };
 
-    std::string input = level_str.empty() ? "info" : level_str;
+    std::string input = level_str.empty() ? "info" : level_str; // Присвоение info при отсутствии значения
 
     auto it = level_map.find(input);
     if (it != level_map.end()) {
+        logger->info("Logger: Logging level detected");
         return it->second;
     }
 
@@ -70,6 +77,6 @@ spdlog::level::level_enum Logger::parse_level(const std::string& level_str) {
         std::cerr << pair.first << " ";
     }
     std::cerr << std::endl << std::endl;
-    logger->error("Неверный уровень логгирования: {}.", input);
+    logger->error("Logger: Неверный уровень логгирования: {}.", input);
     throw std::runtime_error("Invalid argument");
 }
