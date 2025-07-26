@@ -36,7 +36,6 @@ bool SessionManager::session_exists(const std::string& imsi) {
 }
 
 // На будущее мб
-/*
 void SessionManager::delete_session(const std::string& imsi) {
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
@@ -48,7 +47,7 @@ void SessionManager::delete_session(const std::string& imsi) {
         active_sessions.erase(it);
     }
 }
-*/
+
 void SessionManager::cleanup_expired_sessions() {
     auto now = std::chrono::steady_clock::now();
     auto it = active_sessions.begin();

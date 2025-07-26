@@ -33,8 +33,8 @@ public:
     bool create_session(const std::string& imsi, const std::string& client_ip, uint16_t client_port);
     // Проверка существования сессии
     bool session_exists(const std::string& imsi);
-    // Удаление сессии на будущее
-    //void delete_session(const std::string& imsi);
+    // Удаление сессии
+    void delete_session(const std::string& imsi);
     // Очистка просроченных сессий
     void cleanup_expired_sessions();
     // Обновление времени активности сессии
