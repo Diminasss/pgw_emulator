@@ -183,11 +183,22 @@ int main() {
                     }
                     if (received == 0) {
                         // UDP‑сокет никогда не даст 0‑байтов, но на всякий случай
-                        break;
+                        Logger::get()->warn("Received empty UDP packet");
+                        continue;
                     }
 
+                    if (received > BUFFER_SIZE) {
+                        Logger::get()->error("Received packet size {} exceeds buffer size {}", received, BUFFER_SIZE);
+                        // Скипнуть, чтобы сервер не упал
+                        continue;
+                    }
+                    // Проверка на слишком маленький размер находится в check_imsi
+
                     // Преобразование raw‑буфер в вектор
-                    std::vector<uint8_t> bcd_data(buffer, buffer + received);
+                    std::vector<uint8_t> bcd_data;
+                    bcd_data.reserve(received);
+                    bcd_data.assign(buffer, buffer + received);
+
                     // Конвертация BCD -> ASCII IMSI
                     std::string imsi = bcd2ascii(bcd_data);
 
