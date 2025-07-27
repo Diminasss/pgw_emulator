@@ -25,6 +25,7 @@ class SessionManager {
 private:
     std::unordered_map<std::string, PGWSession> active_sessions; // ключ = IMSI
     std::chrono::seconds session_timeout;
+    mutable std::mutex mutex_;
 
 public:
     // Конструктор

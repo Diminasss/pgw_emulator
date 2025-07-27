@@ -7,6 +7,7 @@ PGWSession::PGWSession(std::string imsi, std::string ip, uint16_t port)
           last_activity(std::chrono::steady_clock::now()) {}
 
 bool SessionManager::create_session(const std::string& imsi, const std::string& client_ip, uint16_t client_port) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
         // Сессия уже существует - обновляем время последней активности
@@ -32,11 +33,12 @@ bool SessionManager::create_session(const std::string& imsi, const std::string& 
 }
 
 bool SessionManager::session_exists(const std::string& imsi) {
+    std::lock_guard<std::mutex> lock(mutex_);
     return active_sessions.find(imsi) != active_sessions.end();
 }
 
-// На будущее мб
 void SessionManager::delete_session(const std::string& imsi) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
         Logger::get()->info("Deleting session for IMSI {}", imsi);
@@ -49,18 +51,15 @@ void SessionManager::delete_session(const std::string& imsi) {
 }
 
 void SessionManager::cleanup_expired_sessions() {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto now = std::chrono::steady_clock::now();
     auto it = active_sessions.begin();
 
     while (it != active_sessions.end()) {
-        auto time_diff = std::chrono::duration_cast<std::chrono::seconds>(
-                now - it->second.last_activity);
+        auto time_diff = std::chrono::duration_cast<std::chrono::seconds>(now - it->second.last_activity);
 
         if (time_diff >= session_timeout) {
-            Logger::get()->info("Session for IMSI {} expired (inactive for {} seconds)",
-                                       it->first, time_diff.count());
-
-            // Записываем CDR об истечении сессии
+            Logger::get()->info("Session for IMSI {} expired (inactive for {} seconds)", it->first, time_diff.count());
             std::string additional_info = "timeout " + std::to_string(time_diff.count()) + "s";
             CDRLogger::write_cdr(it->first, CDRAction::SESSION_EXPIRE, additional_info);
 
@@ -72,6 +71,7 @@ void SessionManager::cleanup_expired_sessions() {
 }
 
 void SessionManager::update_activity(const std::string& imsi) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = active_sessions.find(imsi);
     if (it != active_sessions.end()) {
         it->second.last_activity = std::chrono::steady_clock::now();
@@ -79,10 +79,12 @@ void SessionManager::update_activity(const std::string& imsi) {
 }
 
 size_t SessionManager::get_active_sessions_count() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return active_sessions.size();
 }
 
 void SessionManager::print_active_sessions() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     Logger::get()->info("Active sessions: {}", active_sessions.size());
     for (const auto& [imsi, session] : active_sessions) {
         auto now = std::chrono::steady_clock::now();
@@ -107,6 +109,7 @@ std::vector<std::string> SessionManager::get_all_imsis() const {
 }
 */
 size_t SessionManager::remove_sessions_batch(size_t batch_size) {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (active_sessions.empty()) {
         return 0;
     }
